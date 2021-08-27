@@ -1,7 +1,7 @@
 import hashlib
 import logging
 import uuid
-from typing import Any
+from typing import Any, Dict, Union
 
 import redis
 
@@ -22,7 +22,7 @@ class RedisWQ(object):
     https://kubernetes.io/docs/tasks/job/fine-parallel-processing-work-queue
     """
 
-    def __init__(self, name, max_retries=2, **redis_kwargs):
+    def __init__(self, name: str, max_retries: int = 2, **redis_kwargs: Any) -> None:
         """Redis worker queue instance
 
         The default connection parameters are:
@@ -40,6 +40,7 @@ class RedisWQ(object):
             Number of times to retry a job before removing it from the queue.
             If you don't wish to retry jobs, set the limit to 0.
         """
+        redis_kwargs.update(decode_responses=True)
         self._db = redis.Redis(**redis_kwargs)
         # The session ID will uniquely identify this "worker".
         self._session = str(uuid.uuid4())
@@ -53,19 +54,19 @@ class RedisWQ(object):
         self._logger = logging.getLogger("rediswq")
         self._max_retries = max_retries
 
-    def sessionID(self):
+    def sessionID(self) -> str:
         """Return the ID for this session."""
         return self._session
 
-    def _main_qsize(self):
+    def _main_qsize(self) -> int:
         """Return the size of the main queue."""
         return self._db.llen(self._main_q_key)
 
-    def _processing_qsize(self):
+    def _processing_qsize(self) -> int:
         """Return the size of the main queue."""
         return self._db.llen(self._processing_q_key)
 
-    def empty(self):
+    def empty(self) -> bool:
         """Return True if the queue is empty, including work being done,
         False otherwise.
 
@@ -74,7 +75,7 @@ class RedisWQ(object):
         """
         return self._main_qsize() == 0 and self._processing_qsize() == 0
 
-    def _maybe_renew_job(self, job):
+    def _maybe_renew_job(self, job: str) -> None:
         """Transactionally move job from the processing to the work queue.
 
         A job will not be renewed if it appears that another worker is
@@ -157,7 +158,7 @@ class RedisWQ(object):
             )
         return
 
-    def check_expired_leases(self):
+    def check_expired_leases(self) -> None:
         """Return to the work queue
 
         If the lease key is not present for an item (it expired or was
@@ -184,15 +185,15 @@ class RedisWQ(object):
                     )
         return
 
-    def _itemkey(self, item):
+    def _itemkey(self, item: str) -> str:
         """Returns a string that uniquely identifies an item (bytes)."""
-        return hashlib.sha224(item).hexdigest()
+        return hashlib.sha224(item.encode("utf-8")).hexdigest()
 
-    def _lease_exists(self, item):
+    def _lease_exists(self, item: str) -> bool:
         """True if a lease on 'item' exists."""
-        return self._db.exists(self._lease_key_prefix + self._itemkey(item))
+        return bool(self._db.exists(self._lease_key_prefix + self._itemkey(item)))
 
-    def lease(self, lease_secs=60, block=True, timeout=None):
+    def lease(self, lease_secs:int=60, block:bool=True, timeout:int=None) -> bytes:
         """Begin working on an item the work queue.
 
         Lease the item for lease_secs.  After that time, other
@@ -216,7 +217,7 @@ class RedisWQ(object):
             self._db.setex(self._lease_key_prefix + itemkey, lease_secs, self._session)
         return item
 
-    def renew_lease(self, job: Any, lease_secs=60) -> bool:
+    def renew_lease(self, job: str, lease_secs:int=60) -> bool:
         """Checks if the item is currently leased by this client
         and if so renews that lease by `lease_secs`
         Return false if the lease was already expired"""
@@ -228,7 +229,7 @@ class RedisWQ(object):
         else:
             return False
 
-    def get_retry_number(self, job):
+    def get_retry_number(self, job:str) -> int:
         """Return the number of retries for the given `job`.
 
         This returns 0 if the job has never been retried. We do not attempt
@@ -244,7 +245,7 @@ class RedisWQ(object):
             num_retries = int(num_retries)
         return num_retries
 
-    def complete(self, job):
+    def complete(self, job:str) -> None:
         """Complete working on the `job`.
 
         If the lease expired, the item may not have completed, and some

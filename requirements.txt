@@ -1,0 +1,7 @@
+redis
+types-redis
+tox
+mypy
+black
+flake8
+check-manifest
