@@ -193,7 +193,9 @@ class RedisWQ(object):
         """True if a lease on 'item' exists."""
         return bool(self._db.exists(self._lease_key_prefix + self._itemkey(item)))
 
-    def lease(self, lease_secs:int=60, block:bool=True, timeout:int=None) -> bytes:
+    def lease(
+        self, lease_secs: int = 60, block: bool = True, timeout: int = None
+    ) -> bytes:
         """Begin working on an item the work queue.
 
         Lease the item for lease_secs.  After that time, other
@@ -217,7 +219,7 @@ class RedisWQ(object):
             self._db.setex(self._lease_key_prefix + itemkey, lease_secs, self._session)
         return item
 
-    def renew_lease(self, job: str, lease_secs:int=60) -> bool:
+    def renew_lease(self, job: str, lease_secs: int = 60) -> bool:
         """Checks if the item is currently leased by this client
         and if so renews that lease by `lease_secs`
         Return false if the lease was already expired"""
@@ -229,7 +231,7 @@ class RedisWQ(object):
         else:
             return False
 
-    def get_retry_number(self, job:str) -> int:
+    def get_retry_number(self, job: str) -> int:
         """Return the number of retries for the given `job`.
 
         This returns 0 if the job has never been retried. We do not attempt
@@ -245,7 +247,7 @@ class RedisWQ(object):
             num_retries = int(num_retries)
         return num_retries
 
-    def complete(self, job:str) -> None:
+    def complete(self, job: str) -> None:
         """Complete working on the `job`.
 
         If the lease expired, the item may not have completed, and some
