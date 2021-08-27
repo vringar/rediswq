@@ -5,3 +5,6 @@ mypy
 black
 flake8
 check-manifest
+setuptools
+wheel
+build

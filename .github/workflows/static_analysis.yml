@@ -1,0 +1,46 @@
+# runs all the static analysis tools for the project
+
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  mypy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    - name: Install build dependencies
+      run: pip install -r requirements.txt
+    - name: Mypy
+      run: mypy src/ tests/
+  flake8:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    - name: Install build dependencies
+      run: pip install -r requirements.txt
+    - name: Flake8
+      run: flake8 src/ tests/
+  black:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    - name: Install build dependencies
+      run: pip install -r requirements.txt
+    - name: Flake8
+      run: black src/ tests/
