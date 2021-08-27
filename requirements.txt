@@ -8,3 +8,4 @@ check-manifest
 setuptools
 wheel
 build
+pytest
