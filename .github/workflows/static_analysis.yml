@@ -1,6 +1,6 @@
 # runs all the static analysis tools for the project
 
-name: Release
+name: Static Analysis
 
 on:
   push:
